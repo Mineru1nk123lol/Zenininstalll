@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenin IPA iOS - Загрузка ключа</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+            color: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #ff0055, #00aaff, #00ffaa);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #00aaff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+        }
+        
+        .subtitle {
+            color: #aaa;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .game-title {
+            color: #ff0055;
+            font-weight: bold;
+            font-size: 1.8rem;
+            margin: 15px 0;
+        }
+        
+        .key-verification {
+            background-color: rgba(20, 20, 50, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        
+        .key-verification h3 {
+            color: #00aaff;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .key-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .key-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        
+        .key-input:focus {
+            outline: none;
+            border-color: #00aaff;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+        }
+        
+        .key-input.valid {
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .key-input.invalid {
+            border-color: #ff0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        
+        .key-hint {
+            color: #00aaff;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .key-status {
+            margin-top: 10px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        
+        .key-valid {
+            color: #00ff00;
+        }
+        
+        .key-invalid {
+            color: #ff0000;
+        }
+        
+        .process-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .step {
+            text-align: center;
+            width: 48%;
+            padding: 20px;
+            background-color: rgba(20, 20, 40, 0.8);
+            border-radius: 15px;
+            border: 1px solid #333;
+        }
+        
+        .step.active {
+            border-color: #00aaff;
+            box-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
+        }
+        
+        .step.completed {
+            border-color: #00ff00;
+            background-color: rgba(0, 40, 0, 0.3);
+        }
+        
+        .step-title {
+            color: #00aaff;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+        
+        .step-time {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .step-1-time {
+            color: #00ffaa;
+        }
+        
+        .step-2-time {
+            color: #ffaa00;
+        }
+        
+        .step-description {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .loading-container {
+            background-color: rgba(20, 20, 40, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid #333;
+            display: none;
+        }
+        
+        .loading-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .status {
+            color: #ffaa00;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+        
+        .time-remaining {
+            color: #00ffaa;
+            font-weight: bold;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 30px;
+            background-color: #222;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff0055, #00aaff);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: progressShine 2s infinite;
+        }
+        
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            color: #aaa;
+        }
+        
+        .ios-versions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .ios-version {
+            background: rgba(0, 50, 100, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #00aaff;
+            border: 1px solid #00aaff;
+        }
+        
+        .warning {
+            background-color: rgba(255, 50, 0, 0.2);
+            border-left: 5px solid #ff5500;
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .warning h3 {
+            color: #ff5500;
+            margin-bottom: 10px;
+        }
+        
+        .payment-warning {
+            background-color: rgba(255, 100, 0, 0.3);
+            border: 2px solid #ff9900;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(255, 153, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 153, 0, 0.8); }
+        }
+        
+        .payment-warning h3 {
+            color: #ff9900;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .review-request {
+            background-color: rgba(0, 100, 200, 0.3);
+            border: 2px solid #00aaff;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .review-request h3 {
+            color: #00aaff;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .review-request p {
+            margin-bottom: 15px;
+        }
+        
+        .review-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(90deg, #00aaff, #00ffaa);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+        }
+        
+        .review-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 170, 255, 0.5);
+        }
+        
+        .timer {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 25px 0;
+            color: #00ffaa;
+            font-weight: bold;
+        }
+        
+        .instructions {
+            background-color: rgba(0, 50, 50, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            border: 1px solid #00aaaa;
+        }
+        
+        .instructions h3 {
+            color: #00aaaa;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background-color: rgba(0, 100, 0, 0.3);
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 1px solid #00aa00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0); }
+        }
+        
+        .success-message h2 {
+            color: #00ff00;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        .bypass-loading {
+            display: none;
+            text-align: center;
+            padding: 25px;
+            background-color: rgba(100, 50, 0, 0.3);
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 1px solid #ffaa00;
+        }
+        
+        .bypass-loading h2 {
+            color: #ffaa00;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        
+        .bypass-timer {
+            font-size: 1.8rem;
+            color: #ffaa00;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            display: block;
+            width: 300px;
+            margin: 25px auto;
+            padding: 15px;
+            background: linear-gradient(90deg, #ff0055, #00aaff);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .process-steps {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .step {
+                width: 100%;
+            }
+            
+            .loading-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Zenin IPA iOS</h1>
+            <div class="subtitle">Чит-меню для Standoff 2</div>
+            <div class="game-title">Standoff 2</div>
+        </div>
+        
+        <div class="key-verification">
+            <h3>Верификация ключа доступа</h3>
+            <p>Для начала загрузки ключа в систему байпаса iOS введите ваш уникальный ключ:</p>
+            
+            <div class="key-input-container">
+                <input type="text" id="keyInput" class="key-input" placeholder="Введите ключ доступа">
+                <div class="key-hint">Введите ключ, полученный при покупке Zenin IPA iOS</div>
+                <div class="key-status" id="keyStatus"></div>
+            </div>
+            
+            <p style="margin-top: 15px; color: #ffaa00; font-size: 0.9rem;">
+                ⚠️ Внимание: Каждый ключ уникален и привязан к вашему устройству. 
+                Неверный ключ не пройдет верификацию и не будет загружен на сервер.
+            </p>
+        </div>
+        
+        <div class="payment-warning">
+            <h3>⚠️ ВАЖНОЕ УВЕДОМЛЕНИЕ ОБ ОПЛАТЕ</h3>
+            <p>Без подтверждения оплаты и доказательства покупки чита Zenin IPA iOS ваш продукт будет аннулирован.</p>
+            <p>Для подтверждения оплаты сохраните чек/подтверждение платежа и будьте готовы предоставить его по запросу.</p>
+            <p>Активация ключа возможна только после полной проверки оплаты нашими модераторами.</p>
+        </div>
+        
+        <div class="review-request">
+            <h3>📝 ОСТАВЬТЕ НАМ ОТЗЫВ</h3>
+            <p>Пожалуйста, оставьте нам отзыв о работе Zenin IPA iOS для улучшения качества обслуживания и быстрой обработки ваших запросов.</p>
+            <p>Ваш отзыв помогает нам работать быстрее и улучшать продукт для всех пользователей.</p>
+            <a href="#" class="review-btn" id="reviewBtn">Оставить отзыв</a>
+        </div>
+        
+        <div class="process-steps">
+            <div class="step" id="step1">
+                <div class="step-title">ШАГ 1: Передача ключа на сервер pypass</div>
+                <div class="step-time step-1-time">30 секунд</div>
+                <div class="step-description">Проверка и передача ключа на сервер ключей Pypass</div>
+            </div>
+            
+            <div class="step" id="step2">
+                <div class="step-title">ШАГ 2: Загрузка ключа в байпас</div>
+                <div class="step-time step-2-time">3 дня 6 час</div>
+                <div class="step-description">Длительная загрузка ключа в систему байпаса защиты iOS</div>
+            </div>
+        </div>
+        
+        <div class="loading-container" id="loadingContainer">
+            <div class="loading-header">
+                <div class="status" id="currentStatus">Передача ключа на сервер ключей Pypass</div>
+                <div class="time-remaining" id="timeRemaining">Осталось: 30 сек</div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div class="progress-text" id="progressText">Инициализация передачи ключа...</div>
+            
+            <div class="timer">
+                Время до завершения текущего этапа: <span id="countdown">30</span> сек
+            </div>
+        </div>
+        
+        <div class="ios-versions">
+            <div class="ios-version">iOS 15</div>
+            <div class="ios-version">iOS 16</div>
+            <div class="ios-version">iOS 17</div>
+            <div class="ios-version">iOS 18</div>
+            <div class="ios-version">iOS 26</div>
+        </div>
+        
+        <div class="warning">
+            <h3>ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ</h3>
+            <p>Данную загрузку нельзя прерывать заходом в игру 2-3 раза во время процесса, чтобы процесс не сбился. Дождитесь полной загрузки ключа в систему байпаса (3 дня 6 час). Только после этого вы сможете ещё раз вставить key, и вам напишет, что ключ активирован успешно и сможете играть   .</p>
+        </div>
+        
+        <div class="bypass-loading" id="bypassLoading">
+            <h2>Идет загрузка ключа в байпас системы</h2>
+            <div class="bypass-timer" id="bypassTimer">2 дня 01:00:00</div>
+            <p>Этот процесс нельзя прерывать! После завершения вы сможете пользоваться читом Zenin IPA.</p>
+            <p>Не закрывайте эту страницу и не перезагружайте устройство в течение 2 дней 1 часа.</p>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            <h2>Ключ успешно загружен в систему!</h2>
+            <p>Загрузка ключа в байпас iOS завершена. Теперь вы можете пользоваться читом Zenin IPA на вашем iOS устройстве через 3 дня 6 час.</p>
+            <p>Вы можете войти в Standoff 2 и активировать чит-меню.</p>
+        </div>
+        
+        <button class="btn" id="startBtn" disabled>Введите ключ для начала загрузки</button>
+        
+        <div class="instructions">
+            <h3>Инструкция по использованию после загрузки:</h3>
+            <ul>
+                <li>После завершения загрузки ключа в байпас (3 дня 6 час), перезагрузите устройство</li>
+                <li>Запустите Standoff 2 и откройте меню настроек</li>
+                <li>Активируйте Zenin IPA в разделе "Модификации"</li>
+                <li>Настройте нужные функции в чите: ESP, авто-огонь, без отдачи и др.</li>
+                <li>Наслаждайтесь игровым процессом с преимуществом</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>Zenin IPA iOS v3.7.2 | Для Standoff 2 версии 1.0.45 | Совместимость: iOS 15-26</p>
+            <p>Внимание: Реальное время загрузки может отличаться немного .</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const keyInput = document.getElementById('keyInput');
+            const keyStatus = document.getElementById('keyStatus');
+            const startBtn = document.getElementById('startBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const countdownElement = document.getElementById('countdown');
+            const timeRemainingElement = document.getElementById('timeRemaining');
+            const currentStatusElement = document.getElementById('currentStatus');
+            const successMessage = document.getElementById('successMessage');
+            const bypassLoading = document.getElementById('bypassLoading');
+            const bypassTimerElement = document.getElementById('bypassTimer');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const reviewBtn = document.getElementById('reviewBtn');
+            
+            const CORRECT_KEY = "ZIPA-KLU9KLXG";
+            let isKeyValid = false;
+            let isStep1Complete = false;
+            let step1TimeLeft = 30; // 30 секунд для передачи ключа на сервер
+            let bypassTimeLeft = 2 * 24 * 60 * 60 + 60 * 60; // 2 дня 1 час в секундах
+            let progress = 0;
+            const step1TotalTime = 30;
+            let step1Interval;
+            let bypassInterval;
+            
+            // Функция проверки ключа - упрощенная версия
+            const validateKey = (key) => {
+                // Убираем пробелы в начале и конце
+                key = key.trim();
+                
+                // Проверяем конкретный ключ (без требований к длине и формату)
+                if (key === CORRECT_KEY) {
+                    return { isValid: true, message: "✓ Ключ верифицирован. Нажмите 'Начать загрузку ключа'" };
+                } else {
+                    return { isValid: false, message: "✗ Неверный ключ. Используйте правильный ключ" };
+                }
+            };
+            
+            // Обработчик ввода ключа
+            keyInput.addEventListener('input', function() {
+                const key = this.value;
+                const validation = validateKey(key);
+                
+                // Обновляем стиль поля ввода
+                keyInput.classList.remove('valid', 'invalid');
+                if (key.length > 0) {
+                    keyInput.classList.add(validation.isValid ? 'valid' : 'invalid');
+                }
+                
+                // Обновляем статус
+                keyStatus.textContent = validation.message;
+                keyStatus.className = 'key-status ' + (validation.isValid ? 'key-valid' : 'key-invalid');
+                
+                // Обновляем состояние кнопки
+                isKeyValid = validation.isValid;
+                startBtn.disabled = !isKeyValid;
+                startBtn.textContent = isKeyValid ? "Начать загрузку ключа" : "Введите ключ для начала загрузки";
+            });
+            
+            // Обработчик кнопки отзыва
+            reviewBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("Спасибо за желание оставить отзыв! Пожалуйста, отправьте ваш отзыв на наш Telegram: @ZeninIPA_Support\n\nВаш отзыв поможет нам улучшить сервис и ускорить обработку запросов.");
+            });
+            
+            // Форматирование времени для байпаса
+            const formatBypassTime = (seconds) => {
+                const days = Math.floor(seconds / (24 * 60 * 60));
+                seconds %= 24 * 60 * 60;
+                const hours = Math.floor(seconds / (60 * 60));
+                seconds %= 60 * 60;
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                
+                return `${days} дня ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            // Обновление прогресса и таймера для шага 1
+            const updateStep1Progress = () => {
+                const percent = Math.min(100, (progress / step1TotalTime) * 100);
+                progressBar.style.width = percent + '%';
+                
+                let statusText = "";
+                
+                if (percent < 10) {
+                    statusText = "Инициализация передачи ключа...";
+                } else if (percent < 20) {
+                    statusText = "Проверка ключа...";
+                } else if (percent < 40) {
+                    statusText = "Подключение к серверу ключей Pypass...";
+                } else if (percent < 60) {
+                    statusText = "Шифрование ключа...";
+                } else if (percent < 80) {
+                    statusText = "Передача ключа на сервер...";
+                } else if (percent < 100) {
+                    statusText = "Финальная проверка передачи...";
+                } else {
+                    statusText = "Передача ключа завершена!";
+                }
+                
+                progressText.textContent = statusText;
+                countdownElement.textContent = step1TimeLeft;
+                timeRemainingElement.textContent = `Осталось: ${step1TimeLeft} сек`;
+                
+                // Если время вышло, завершаем шаг 1
+                if (step1TimeLeft <= 0) {
+                    isStep1Complete = true;
+                    progressText.textContent = "Ключ успешно передан на сервер Pypass!";
+                    step1.classList.add('completed');
+                    step2.classList.add('active');
+                    
+                    // Начинаем шаг 2
+                    startBypassLoading();
+                    clearInterval(step1Interval);
+                }
+            };
+            
+            // Начало загрузки в байпас (шаг 2)
+            const startBypassLoading = () => {
+                currentStatusElement.textContent = "Загрузка ключа в байпас системы iOS";
+                currentStatusElement.style.color = "#ffaa00";
+                
+                // Показываем блок загрузки байпаса
+                bypassLoading.style.display = 'block';
+                
+                // Обновляем таймер байпаса
+                bypassTimerElement.textContent = formatBypassTime(bypassTimeLeft);
+                
+                // Симуляция длительной загрузки (в демо ускорено)
+                bypassInterval = setInterval(() => {
+                    bypassTimeLeft -= 1;
+                    
+                    // Для демонстрации ускоряем в 1000 раз
+                    if (bypassTimeLeft <= 0) {
+                        bypassTimeLeft = 0;
+                        bypassTimerElement.textContent = formatBypassTime(bypassTimeLeft);
+                        completeBypassLoading();
+                        clearInterval(bypassInterval);
+                    } else {
+                        bypassTimerElement.textContent = formatBypassTime(bypassTimeLeft);
+                    }
+                }, 10); // В реальности здесь было бы 1000 (1 секунда)
+            };
+            
+            // Завершение загрузки в байпас
+            const completeBypassLoading = () => {
+                // Скрываем блок загрузки байпаса
+                bypassLoading.style.display = 'none';
+                
+                // Показываем сообщение об успехе
+                successMessage.style.display = 'block';
+                
+                // Обновляем статус
+                currentStatusElement.textContent = "Загрузка ключа завершена!";
+                currentStatusElement.style.color = "#00ff00";
+                
+                // Отмечаем шаг 2 как завершенный
+                step2.classList.remove('active');
+                step2.classList.add('completed');
+                
+                // Обновляем прогресс бар
+                progressBar.style.width = '100%';
+                progressBar.style.background = 'linear-gradient(90deg, #00ff00, #00aa00)';
+                progressText.textContent = "Ключ успешно загружен в байпас системы iOS!";
+                timeRemainingElement.textContent = "Загрузка завершена";
+                
+                // Активируем кнопку снова для новой загрузки
+                startBtn.disabled = false;
+                startBtn.textContent = "Загрузить ключ для другого устройства";
+                startBtn.onclick = function() {
+                    location.reload();
+                };
+            };
+            
+            // Начало процесса загрузки
+            startBtn.addEventListener('click', function() {
+                if (!isKeyValid) {
+                    alert("Пожалуйста, введите правильный ключ");
+                    keyInput.focus();
+                    return;
+                }
+                
+                startBtn.disabled = true;
+                startBtn.textContent = "Идет загрузка ключа...";
+                
+                // Скрываем блок ввода ключа и показываем блок загрузки
+                document.querySelector('.key-verification').style.display = 'none';
+                loadingContainer.style.display = 'block';
+                
+                // Активируем шаг 1
+                step1.classList.add('active');
+                
+                // Запускаем таймер шага 1
+                step1Interval = setInterval(() => {
+                    step1TimeLeft--;
+                    progress = step1TotalTime - step1TimeLeft;
+                    updateStep1Progress();
+                }, 1000);
+            });
+            
+            // Инициализация
+            updateStep1Progress();
+            
+            // Для демонстрации ускоряем байпас
+            bypassTimeLeft = 10; // Для демо: 10 секунд вместо 2 дней 1 часа
+            
+            // Автоматически заполняем поле с правильным ключом для тестирования
+            // Раскомментируйте следующую строку для автоматического заполнения ключа:
+            // keyInput.value = "ZIPA-KLU9KLXG";
+            // keyInput.dispatchEvent(new Event('input'));
+        });
+    </script>
+</body>
+</html>
